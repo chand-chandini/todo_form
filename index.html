@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Todo</title>
+  </head>
+  <body>
+    <h2>My Todo List</h2>
+
+    <input type="text" id="taskInput" placeholder="Enter task" />
+    <button onclick="addTask()">Add Task</button>
+    <button onclick="getTasks()">Refresh List</button>
+
+    <hr />
+
+    <ul id="taskList"></ul>
+
+    <script>
+      async function getTasks() {
+        const response = await fetch("http://localhost:3000/");
+        const tasks = await response.json();
+
+        const list = document.getElementById("taskList");
+        list.innerHTML = "";
+
+        tasks.forEach(function (task) {
+          const li = document.createElement("li");
+
+          li.innerHTML =
+            task.itemDescription +
+            ' <button onclick="editTask(' +
+            task.ID +
+            ", '" +
+            task.itemDescription +
+            "')\">Edit</button>" +
+            ' <button onclick="deleteTask(' +
+            task.ID +
+            ')">Delete</button>';
+
+          list.appendChild(li);
+        });
+      }
+
+      async function addTask() {
+        const input = document.querySelector("#taskInput");
+                    //const input = document.getElementById("taskInput"); for id="taskInput" in input field
+        const text = input.value;
+
+        if (text === "") return;
+
+        await fetch("http://localhost:3000/add-item", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: text }),
+        });
+
+        input.value = "";
+        getTasks();
+      }
+
+      async function editTask(id, oldText) {
+        const newText = prompt("Edit task:", oldText);
+
+        if (newText === null || newText.trim() === "") return;
+
+        await fetch("http://localhost:3000/edit-item", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            itemDescription: newText,
+            ID: id,
+          }),
+        });
+
+        getTasks();
+      }
+
+      async function deleteTask(id) {
+        await fetch("http://localhost:3000/delete-item/" + id, {
+          method: "DELETE",
+        });
+        getTasks();
+      }
+
+      getTasks();
+    </script>
+  </body>
+</html>
